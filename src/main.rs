@@ -17,6 +17,7 @@ struct Bullet {
 
 #[macroquad::main("Mactrotoid")]
 async fn main() {
+    
     println!("Screen Width: {}", screen_width());
     println!("Screen height: {}", screen_height());
 
@@ -56,9 +57,11 @@ async fn main() {
             ship.pos.x -= player_speed;
         }
 
-
-        if is_key_down(KeyCode::P) {
-            // let collected_bullet: Vec<Bullet> = (0..11).collect();
+        if ship.pos.x >= screen_width() - ship.texture.width(){
+            ship.pos.x = screen_width() - ship.texture.width();
+        }
+        if ship.pos.x <= 0.0{
+            ship.pos.x = 0.0;
         }
 
         if  is_key_down(KeyCode::Space) && current_time - last_shot > fire_rate{
@@ -102,7 +105,7 @@ async fn main() {
             }else {
                 enemy.pos.x -= 2.0
             }
-            if enemy.pos.x >= screen_width(){
+            if enemy.pos.x >= screen_width() -  enemy.texture.width(){
                 enemy.bounce = true;
             }else if enemy.pos.x <= 0.0{
                 enemy.bounce = false
@@ -110,7 +113,7 @@ async fn main() {
 
             enemy.pos.y += 0.5;
         }
-        
+
         next_frame().await
     }
 }
