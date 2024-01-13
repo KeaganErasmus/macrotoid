@@ -3,7 +3,7 @@ use macroquad::prelude::*;
 struct Enemy {
     pos: Vec2,
     texture: Texture2D,
-    // enemy_type: str
+    bounce: bool
 }
 
 struct Ship {
@@ -16,7 +16,11 @@ struct Bullet {
 }
 
 #[macroquad::main("Mactrotoid")]
-async fn main() { 
+async fn main() {
+    println!("Screen Width: {}", screen_width());
+    println!("Screen height: {}", screen_height());
+
+
     let player_speed: f32 = 5.0; 
     let player_texture = Texture2D::from_file_with_format(include_bytes!("Jump.png"), None);
     let enemy_texture = Texture2D::from_file_with_format(include_bytes!("Jump.png"), None);
@@ -32,10 +36,11 @@ async fn main() {
 
     let mut enemies = Vec::new();
 
-    for i in 1..11{
+    for i in 1..2{
         enemies.push(Enemy {
             pos: Vec2::new(i as f32 * 20.0, 1.0),
-            texture: enemy_texture.clone()
+            texture: enemy_texture.clone(),
+            bounce: false
         });
     }
     
@@ -58,7 +63,16 @@ async fn main() {
 
         if  is_key_down(KeyCode::Space) && current_time - last_shot > fire_rate{
             bullets.push(Bullet{
-                pos: ship.pos
+                pos: ship.pos,
+            });
+            last_shot = current_time;
+        }
+
+        if  is_key_down(KeyCode::L) && current_time - last_shot > fire_rate{
+            enemies.push(Enemy{
+                pos: Vec2::new(0.0, 20.0),
+                texture: enemy_texture.clone(),
+                bounce: false
             });
             last_shot = current_time;
         }
@@ -78,10 +92,25 @@ async fn main() {
 
         // Render enemies
         for enemy in enemies.iter_mut(){
-            draw_texture(&enemy.texture, enemy.pos.x * 2.0, enemy.pos.y, RED);
+            draw_texture(&enemy.texture, enemy.pos.x, enemy.pos.y, RED);
         }
 
+        // Enemy Movement
+        for enemy in enemies.iter_mut(){
+            if enemy.bounce == false{
+                enemy.pos.x += 2.0;
+            }else {
+                enemy.pos.x -= 2.0
+            }
+            if enemy.pos.x >= screen_width(){
+                enemy.bounce = true;
+            }else if enemy.pos.x <= 0.0{
+                enemy.bounce = false
+            }
 
+            enemy.pos.y += 0.5;
+        }
+        
         next_frame().await
     }
 }
