@@ -4,11 +4,12 @@ struct Enemy {
     pos: Vec2,
     texture: Texture2D,
     bounce: bool,
-    collision_rect: Rect
+    collision_rect: Rect,
+    health: i32
 }
 
 impl Enemy {
-    fn new(x: f32, y: f32, texture: Texture2D) -> Enemy{
+    fn new(x: f32, y: f32, texture: Texture2D, health: i32) -> Enemy{
         let pos = Vec2::new(x, y);
         let collision_rect = Rect::new(pos.x, pos.y, 32.0, 32.0);
 
@@ -16,7 +17,8 @@ impl Enemy {
             pos, 
             texture,
             bounce: false,
-            collision_rect
+            collision_rect,
+            health
         }
     }
 }
@@ -56,7 +58,7 @@ async fn main() {
     let mut enemies = Vec::new();
 
     for i in 1..2 {
-        enemies.push(Enemy::new(i as f32 * 20.0, 1.0, enemy_texture.clone()));
+        enemies.push(Enemy::new(i as f32 * 20.0, 1.0, enemy_texture.clone(), 10));
     }
 
     loop {
@@ -89,7 +91,7 @@ async fn main() {
         }
 
         if  is_key_down(KeyCode::L) && current_time - last_shot > fire_rate{
-            enemies.push(Enemy::new(0.0, 20.0, enemy_texture.clone()));
+            enemies.push(Enemy::new(0.0, 20.0, enemy_texture.clone(), 20));
             last_shot = current_time;
         }
 
@@ -110,14 +112,12 @@ async fn main() {
             bullet.collision_rect.y = bullet.pos.y;
         }
 
-        bullets.retain(|bullet| bullet.is_active == true);
-        
-
+    
         // Render enemies
         for enemy in enemies.iter_mut(){
             draw_texture(&enemy.texture, enemy.pos.x, enemy.pos.y, RED);
         }
-
+        
         // Enemy Movement
         for enemy in enemies.iter_mut(){
             if enemy.bounce == false{
@@ -130,21 +130,24 @@ async fn main() {
             }else if enemy.pos.x <= 0.0{
                 enemy.bounce = false
             }
-
+            
             enemy.pos.y += 0.5;
             enemy.collision_rect.x = enemy.pos.x;
             enemy.collision_rect.y = enemy.pos.y;
         }
-
+        
         // Checks for bullet and enemy collsisions
         for enemy in enemies.iter_mut(){
             for bullet in bullets.iter_mut(){
                 if bullet.collision_rect.overlaps(&enemy.collision_rect){
                     bullet.is_active = false;
+                    enemy.health -= 5;
                 }
             }
         }
 
+        bullets.retain(|bullet| bullet.is_active == true);
+        enemies.retain(|enemy| enemy.health > 0);
         next_frame().await
     }
 }
