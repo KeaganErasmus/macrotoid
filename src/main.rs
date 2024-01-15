@@ -3,7 +3,22 @@ use macroquad::prelude::*;
 struct Enemy {
     pos: Vec2,
     texture: Texture2D,
-    bounce: bool
+    bounce: bool,
+    collision_rect: Rect
+}
+
+impl Enemy {
+    fn new(x: f32, y: f32, texture: Texture2D) -> Enemy{
+        let pos = Vec2::new(x, y);
+        let collision_rect = Rect::new(pos.x, pos.y, 32.0, 32.0);
+
+        Enemy {
+            pos, 
+            texture,
+            bounce: false,
+            collision_rect
+        }
+    }
 }
 
 struct Ship {
@@ -13,6 +28,8 @@ struct Ship {
 
 struct Bullet {
     pos: Vec2,
+    is_active: bool,
+    collision_rect: Rect
 }
 
 #[macroquad::main("Mactrotoid")]
@@ -21,10 +38,11 @@ async fn main() {
     println!("Screen Width: {}", screen_width());
     println!("Screen height: {}", screen_height());
 
+    // Load game textures
+    let player_texture  : Texture2D = Texture2D::from_file_with_format(include_bytes!("Jump.png"), None);
+    let enemy_texture   : Texture2D = Texture2D::from_file_with_format(include_bytes!("Jump.png"), None);
 
     let player_speed: f32 = 5.0; 
-    let player_texture = Texture2D::from_file_with_format(include_bytes!("Jump.png"), None);
-    let enemy_texture = Texture2D::from_file_with_format(include_bytes!("Jump.png"), None);
     let mut last_shot = get_time();
     let fire_rate = 0.5;
     
@@ -37,15 +55,12 @@ async fn main() {
 
     let mut enemies = Vec::new();
 
-    for i in 1..2{
-        enemies.push(Enemy {
-            pos: Vec2::new(i as f32 * 20.0, 1.0),
-            texture: enemy_texture.clone(),
-            bounce: false
-        });
+    for i in 1..2 {
+        enemies.push(Enemy::new(i as f32 * 20.0, 1.0, enemy_texture.clone()));
     }
-    
+
     loop {
+
         clear_background(WHITE);
         let current_time = get_time();
         draw_texture(&ship.texture, ship.pos.x, ship.pos.y, WHITE);
@@ -67,30 +82,35 @@ async fn main() {
         if  is_key_down(KeyCode::Space) && current_time - last_shot > fire_rate{
             bullets.push(Bullet{
                 pos: ship.pos,
+                is_active: true,
+                collision_rect: Rect::new(ship.pos.x, ship.pos.y, 5.0, 5.0)
             });
             last_shot = current_time;
         }
 
         if  is_key_down(KeyCode::L) && current_time - last_shot > fire_rate{
-            enemies.push(Enemy{
-                pos: Vec2::new(0.0, 20.0),
-                texture: enemy_texture.clone(),
-                bounce: false
-            });
+            enemies.push(Enemy::new(0.0, 20.0, enemy_texture.clone()));
             last_shot = current_time;
         }
 
         // Render Bullets
         for bullet in bullets.iter_mut(){
-            draw_rectangle(bullet.pos.x, bullet.pos.y, 5.0, 5.0, RED);
+            if bullet.is_active{
+                draw_rectangle(bullet.pos.x, bullet.pos.y, 5.0, 5.0, RED);
+            }
         }
 
         // Move Bullets
         for bullet in bullets.iter_mut(){
-            bullet.pos.y -= 5.0;
+            if bullet.is_active{
+                bullet.pos.y -= 5.0;
+            }
+            
+            bullet.collision_rect.x = bullet.pos.x;
+            bullet.collision_rect.y = bullet.pos.y;
         }
 
-        bullets.retain(|bullet| bullet.pos.y > 0.0);
+        bullets.retain(|bullet| bullet.is_active == true);
         
 
         // Render enemies
@@ -112,6 +132,17 @@ async fn main() {
             }
 
             enemy.pos.y += 0.5;
+            enemy.collision_rect.x = enemy.pos.x;
+            enemy.collision_rect.y = enemy.pos.y;
+        }
+
+        // Checks for bullet and enemy collsisions
+        for enemy in enemies.iter_mut(){
+            for bullet in bullets.iter_mut(){
+                if bullet.collision_rect.overlaps(&enemy.collision_rect){
+                    bullet.is_active = false;
+                }
+            }
         }
 
         next_frame().await
