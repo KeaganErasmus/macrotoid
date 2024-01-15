@@ -5,7 +5,8 @@ struct Enemy {
     texture: Texture2D,
     bounce: bool,
     collision_rect: Rect,
-    health: i32
+    health: i32,
+    is_dead: bool
 }
 
 impl Enemy {
@@ -18,7 +19,8 @@ impl Enemy {
             texture,
             bounce: false,
             collision_rect,
-            health
+            health,
+            is_dead: false
         }
     }
 }
@@ -39,6 +41,8 @@ async fn main() {
     
     println!("Screen Width: {}", screen_width());
     println!("Screen height: {}", screen_height());
+
+    let mut score: f32 = 0.0;
 
     // Load game textures
     let player_texture  : Texture2D = Texture2D::from_file_with_format(include_bytes!("Jump.png"), None);
@@ -64,6 +68,10 @@ async fn main() {
     loop {
 
         clear_background(WHITE);
+        let score_text = format!("{}", score);
+
+        draw_text(&score_text, 50.0, 50.0, 50.0, BLACK);
+
         let current_time = get_time();
         draw_texture(&ship.texture, ship.pos.x, ship.pos.y, WHITE);
 
@@ -131,6 +139,11 @@ async fn main() {
                 enemy.bounce = false
             }
             
+            if enemy.health <= 0{
+                score += 10.0;
+                enemy.is_dead = true
+            }
+
             enemy.pos.y += 0.5;
             enemy.collision_rect.x = enemy.pos.x;
             enemy.collision_rect.y = enemy.pos.y;
@@ -147,7 +160,7 @@ async fn main() {
         }
 
         bullets.retain(|bullet| bullet.is_active == true);
-        enemies.retain(|enemy| enemy.health > 0);
+        enemies.retain(|enemy| enemy.is_dead == false);
         next_frame().await
     }
 }
