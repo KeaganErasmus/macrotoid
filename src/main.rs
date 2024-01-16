@@ -1,4 +1,3 @@
-// use rand::Rng;
 use macroquad::prelude::*;
 
 struct Enemy {
@@ -29,6 +28,8 @@ impl Enemy {
 struct Ship {
     pos: Vec2,
     texture: Texture2D,
+    health: i32,
+    is_dead: bool,
 }
 
 struct Bullet {
@@ -39,10 +40,6 @@ struct Bullet {
 
 #[macroquad::main("Mactrotoid")]
 async fn main() {
-
-    // let width_spawn = rand::gen_range(0, screen_width() as i32);
-    // let height_spawn = rand::gen_range(10, screen_height() as i32);
-
     println!("Screen Width: {}", screen_width());
     println!("Screen height: {}", screen_height());
 
@@ -58,12 +55,14 @@ async fn main() {
     let mut last_shot = get_time();
     let fire_rate = 0.5;
 
-    let spawn_rate = 1.0; 
+    let spawn_rate = 1.0;
     let mut last_spawn = get_time();
 
     let mut ship = Ship {
         pos: Vec2::new(screen_width() / 2.0, 500.0),
         texture: player_texture,
+        health: 3,
+        is_dead: false,
     };
 
     let mut bullets = Vec::new();
@@ -73,17 +72,24 @@ async fn main() {
         let width_spawn = rand::gen_range(0, screen_width() as i32);
         let height_spawn = rand::gen_range(10, 50 as i32);
 
-        // println!("{:?}", get_fps());
         clear_background(WHITE);
         let score_text = format!("{}", score);
 
         draw_text(&score_text, 50.0, 50.0, 50.0, BLACK);
 
         let current_time = get_time();
-        draw_texture(&ship.texture, ship.pos.x, ship.pos.y, WHITE);
+
+        if !ship.is_dead {
+            draw_texture(&ship.texture, ship.pos.x, ship.pos.y, WHITE);
+        }
 
         if current_time - last_spawn > spawn_rate {
-            enemies.push(Enemy::new(width_spawn as f32, height_spawn as f32, enemy_texture.clone(), 5));
+            enemies.push(Enemy::new(
+                width_spawn as f32,
+                height_spawn as f32,
+                enemy_texture.clone(),
+                5,
+            ));
             last_spawn = current_time;
         }
 
@@ -111,7 +117,12 @@ async fn main() {
         }
 
         if is_key_down(KeyCode::L) && current_time - last_shot > fire_rate {
-            enemies.push(Enemy::new(width_spawn as f32, height_spawn as f32, enemy_texture.clone(), 5));
+            enemies.push(Enemy::new(
+                width_spawn as f32,
+                height_spawn as f32,
+                enemy_texture.clone(),
+                5,
+            ));
             last_shot = current_time;
         }
 
@@ -133,31 +144,42 @@ async fn main() {
         }
 
         // Render enemies
-        for enemy in enemies.iter_mut() {
-            draw_texture(&enemy.texture, enemy.pos.x, enemy.pos.y, RED);
-        }
-
-        // Enemy Movement
-        for enemy in enemies.iter_mut() {
-            if enemy.bounce == false {
-                enemy.pos.x += 2.0;
-            } else {
-                enemy.pos.x -= 2.0
-            }
-            if enemy.pos.x >= screen_width() - enemy.texture.width() {
-                enemy.bounce = true;
-            } else if enemy.pos.x <= 0.0 {
-                enemy.bounce = false
+        if !ship.is_dead {
+            for enemy in enemies.iter_mut() {
+                draw_texture(&enemy.texture, enemy.pos.x, enemy.pos.y, RED);
             }
 
-            if enemy.health <= 0 {
-                score += 10.0;
-                enemy.is_dead = true
+            // Enemy Movement
+            for enemy in enemies.iter_mut() {
+                if enemy.bounce == false {
+                    enemy.pos.x += 2.0;
+                } else {
+                    enemy.pos.x -= 2.0
+                }
+                if enemy.pos.x >= screen_width() - enemy.texture.width() {
+                    enemy.bounce = true;
+                } else if enemy.pos.x <= 0.0 {
+                    enemy.bounce = false
+                }
+
+                if enemy.health <= 0 {
+                    score += 10.0;
+                    enemy.is_dead = true
+                }
+
+                if enemy.pos.y > screen_height() {
+                    enemy.is_dead = true;
+                    ship.health -= 1;
+                }
+
+                enemy.pos.y += 0.5;
+                enemy.collision_rect.x = enemy.pos.x;
+                enemy.collision_rect.y = enemy.pos.y;
             }
 
-            enemy.pos.y += 0.5;
-            enemy.collision_rect.x = enemy.pos.x;
-            enemy.collision_rect.y = enemy.pos.y;
+            if ship.health <= 0 {
+                ship.is_dead = true;
+            }
         }
 
         // Checks for bullet and enemy collsisions
@@ -170,8 +192,13 @@ async fn main() {
             }
         }
 
+        if ship.is_dead {
+            draw_text("Skill issue", 150.0, screen_height() / 2.0, 100.0, BLACK);
+        }
+
         bullets.retain(|bullet| bullet.is_active == true);
         enemies.retain(|enemy| enemy.is_dead == false);
+
         next_frame().await
     }
 }
