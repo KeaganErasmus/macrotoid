@@ -1,4 +1,4 @@
-use macroquad::{audio, prelude::*};
+use macroquad::prelude::*;
 
 struct Enemy {
     pos: Vec2,
@@ -46,12 +46,12 @@ async fn main() {
     let mut score: f32 = 0.0;
     // Load game textures
     let player_texture: Texture2D =
-        Texture2D::from_file_with_format(include_bytes!("Jump.png"), None);
+        Texture2D::from_file_with_format(include_bytes!("../assets/Jump.png"), None);
     let enemy_texture: Texture2D =
-        Texture2D::from_file_with_format(include_bytes!("Jump.png"), None);
+        Texture2D::from_file_with_format(include_bytes!("../assets/Jump.png"), None);
 
     // Load game sounds
-    let ship_shot = audio::load_sound("shot.mp3").await.unwrap();
+    // let ship_shot = audio::load_sound("assets/shot.mp3").await.unwrap();
 
     let player_speed: f32 = 5.0;
     let mut last_shot = get_time();
@@ -104,7 +104,7 @@ async fn main() {
                     is_active: true,
                     collision_rect: Rect::new(ship.pos.x, ship.pos.y, 5.0, 5.0),
                 });
-                audio::play_sound_once(&ship_shot);
+                // audio::play_sound_once(&ship_shot);
                 last_shot = current_time;
             }
 
