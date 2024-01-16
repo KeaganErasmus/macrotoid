@@ -1,3 +1,4 @@
+// use rand::Rng;
 use macroquad::prelude::*;
 
 struct Enemy {
@@ -38,6 +39,10 @@ struct Bullet {
 
 #[macroquad::main("Mactrotoid")]
 async fn main() {
+
+    // let width_spawn = rand::gen_range(0, screen_width() as i32);
+    // let height_spawn = rand::gen_range(10, screen_height() as i32);
+
     println!("Screen Width: {}", screen_width());
     println!("Screen height: {}", screen_height());
 
@@ -53,20 +58,22 @@ async fn main() {
     let mut last_shot = get_time();
     let fire_rate = 0.5;
 
+    let spawn_rate = 1.0; 
+    let mut last_spawn = get_time();
+
     let mut ship = Ship {
         pos: Vec2::new(screen_width() / 2.0, 500.0),
         texture: player_texture,
     };
 
     let mut bullets = Vec::new();
-
     let mut enemies = Vec::new();
 
-    for i in 1..2 {
-        enemies.push(Enemy::new(i as f32 * 20.0, 1.0, enemy_texture.clone(), 10));
-    }
-
     loop {
+        let width_spawn = rand::gen_range(0, screen_width() as i32);
+        let height_spawn = rand::gen_range(10, 50 as i32);
+
+        // println!("{:?}", get_fps());
         clear_background(WHITE);
         let score_text = format!("{}", score);
 
@@ -74,6 +81,11 @@ async fn main() {
 
         let current_time = get_time();
         draw_texture(&ship.texture, ship.pos.x, ship.pos.y, WHITE);
+
+        if current_time - last_spawn > spawn_rate {
+            enemies.push(Enemy::new(width_spawn as f32, height_spawn as f32, enemy_texture.clone(), 5));
+            last_spawn = current_time;
+        }
 
         if is_key_down(KeyCode::D) {
             ship.pos.x += player_speed;
@@ -99,7 +111,7 @@ async fn main() {
         }
 
         if is_key_down(KeyCode::L) && current_time - last_shot > fire_rate {
-            enemies.push(Enemy::new(0.0, 20.0, enemy_texture.clone(), 20));
+            enemies.push(Enemy::new(width_spawn as f32, height_spawn as f32, enemy_texture.clone(), 5));
             last_shot = current_time;
         }
 
