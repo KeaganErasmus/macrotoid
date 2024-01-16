@@ -8,8 +8,8 @@ This code is not very good, everything is in one file and all over the place but
 (screenshot of Demon Attack)
 
 ## Tools used
-Rust
-Macroquad (game framework)
+*Rust
+*Macroquad (game framework)
 
 ## How to play
 Download the project and run **cargo run** in the console and it should work
