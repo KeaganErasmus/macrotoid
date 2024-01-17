@@ -25,4 +25,5 @@ Download the project and run **cargo run** in the console and it should work.
 * Different enemy types
 * Powerups
 * UI for menu and end screen
+
 I would love to add these features but the code has become pretty bad and I feel like it would be better to just start a new project as I keep learning **Rust**
