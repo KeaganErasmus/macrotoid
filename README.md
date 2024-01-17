@@ -12,4 +12,17 @@ The code written for this project is not very good, everything is in one file an
 * Macroquad (game framework)
 
 ## How to play
-Download the project and run **cargo run** in the console and it should work
+Download the project and run **cargo run** in the console and it should work.
+# Controls
+* A/D to move left and right.
+* Space to shoot.
+# Rules
+* you have 3 lives you lose a live when an enemy gets to the bottom of the screen.
+* you get points for destrying enemies.
+
+## What Isn't implemented
+* Sounds and music
+* Different enemy types
+* Powerups
+* UI for menu and end screen
+I would love to add these features but the code has become pretty bad and I feel like it would be better to just start a new project as I keep learning **Rust**
